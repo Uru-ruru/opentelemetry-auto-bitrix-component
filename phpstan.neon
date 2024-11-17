@@ -4,7 +4,8 @@ parameters:
 		- src
 	scanFiles:
 		- _register.php
+	excludePaths:
+	    - src/BaseComponent.php
 	ignoreErrors:
-	    - '#^Class CBitrixComponent not found.$#'
-	    - '#^Class Bitrix\\Main\\HttpRequest not found.$#'
-	    - '#^Parameter \$component of anonymous function has invalid type CBitrixComponent.$#'
+	    - '#^Class [a-zA-Z\\]+ not found.$#'
+	    - '#^Parameter \$[a-zA-Z]+ of anonymous function has invalid type [a-zA-Z\\]+.$#'

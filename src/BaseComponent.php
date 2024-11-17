@@ -7,11 +7,9 @@ use Bitrix\Main\Request;
 
 class BaseComponent extends \CBitrixComponent implements BitrixComponentInterface
 {
+    public function executeComponent() {}
 
-    public function executeComponent()
-    {
-    }
-    public function getRequest(): Request|HttpRequest
+    public function getRequest(): HttpRequest|Request
     {
         return $this->request;
     }
