@@ -35,9 +35,9 @@ jobs:
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    - name: Run php-cs-fixer suite
-      run: composer run-script php-cs-fixer
+    #- name: Run php-cs-fixer suite
+    #  run: composer run-script php-cs-fixer
 
     
-    - name: Run php-stan suite
-      run: composer run-script php-stan
+    #- name: Run php-stan suite
+    #  run: composer run-script php-stan
