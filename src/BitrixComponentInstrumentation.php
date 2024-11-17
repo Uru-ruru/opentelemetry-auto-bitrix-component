@@ -2,6 +2,7 @@
 
 namespace OpenTelemetry\Contrib\Instrumentation\Bitrix;
 
+use Bitrix\Main\HttpRequest;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Instrumentation\CachedInstrumentation;
 use OpenTelemetry\API\Trace\Span;
@@ -16,8 +17,8 @@ class BitrixComponentInstrumentation
 {
     public const NAME = 'bitrix.component';
     public const CODE_RESULT = self::NAME.'.response.result';
-    public const PARAMS = self::NAME.'.ar.params';
-    public const RESULT = self::NAME.'.ar.result';
+    public const PARAMS = self::NAME.'.array.params';
+    public const RESULT = self::NAME.'.array.result';
     public const REQUEST_PAGE = self::NAME.'.request.page';
     public const REQUEST_PAGE_DIR = self::NAME.'.request.directory';
     public const REQUEST_QUERY = self::NAME.'.request.query';
@@ -34,7 +35,7 @@ class BitrixComponentInstrumentation
             class: \CBitrixComponent::class,
             function: 'executeComponent',
             pre: static function (\CBitrixComponent $component, array $params, string $class, string $function, ?string $filename, ?int $lineno) use ($instrumentation) {
-                $request = (method_exists($component, 'getRequest') && $component->getRequest() instanceof \Bitrix\Main\HttpRequest) ? $component->getRequest() : null;
+                $request = (method_exists($component, 'getRequest') && $component->getRequest() instanceof HttpRequest) ? $component->getRequest() : null;
                 $builder = $instrumentation->tracer()
                     ->spanBuilder($component->getName())
                     ->setSpanKind(SpanKind::KIND_SERVER)

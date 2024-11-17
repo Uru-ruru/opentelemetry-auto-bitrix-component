@@ -37,5 +37,15 @@
     "files": [
       "_register.php"
     ]
+  },
+  "scripts" : {
+    "php-cs-fixer" : "vendor/bin/php-cs-fixer fix --verbose --allow-risky=yes --using-cache=no --config .php-cs-fixer.php",
+    "php-stan" : "vendor/bin/phpstan analyse --memory-limit 1G"
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true,
+      "tbachert/spi": true
+    }
   }
 }
