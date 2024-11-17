@@ -5,7 +5,7 @@
   "type": "library",
   "homepage": "https://opentelemetry.io/docs/php",
   "readme": "./README.md",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
