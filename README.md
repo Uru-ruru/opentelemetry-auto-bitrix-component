@@ -9,6 +9,10 @@
 Auto-instrumentation hooks are registered via composer, and spans will automatically be created for:
 - `\CBitrixComponent::executeComponent()` - root span
 
+## Install
+
+`composer require uru/opentelemetry-auto-bitrix-component`
+
 ## Extend
 
 You can extent Bitrix standard component class by adding additional method `getRequest` this code example:
