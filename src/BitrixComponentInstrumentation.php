@@ -59,8 +59,8 @@ class BitrixComponentInstrumentation
                         ->setParent($parent)
                         ->setAttribute(self::REQUEST_PAGE, $request->getRequestedPage())
                         ->setAttribute(self::REQUEST_PAGE_DIR, $request->getRequestedPageDirectory())
-                        ->setAttribute(self::REQUEST_QUERY, array_change_key_case($request->getQueryList()->toArray()))
-                        ->setAttribute(self::REQUEST_COOKIES, array_change_key_case($request->getCookieList()->toArray()))
+                        ->setAttribute(self::REQUEST_QUERY, @json_encode($request->getQueryList()->toArray()))
+                        ->setAttribute(self::REQUEST_COOKIES, @json_encode($request->getCookieList()->toArray()))
                         ->startSpan()
                     ;
                 } else {
