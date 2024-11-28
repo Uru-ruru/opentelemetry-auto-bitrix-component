@@ -29,21 +29,29 @@ class BitrixComponentInstrumentation
         $instrumentation = new CachedInstrumentation(
             'io.opentelemetry.contrib.php.'.self::NAME,
             null,
-            'https://opentelemetry.io/schemas/1.25.0'
+            TraceAttributes::SCHEMA_URL
         );
         hook(
             class: \CBitrixComponent::class,
             function: 'executeComponent',
-            pre: static function (\CBitrixComponent $component, array $params, string $class, string $function, ?string $filename, ?int $lineno) use ($instrumentation) {
-                $request = (method_exists($component, 'getRequest') && $component->getRequest() instanceof HttpRequest) ? $component->getRequest() : null;
+            pre: static function (
+                \CBitrixComponent $component,
+                array $params,
+                string $class,
+                string $function,
+                ?string $filename,
+                ?int $lineno
+            ) use ($instrumentation) {
+                /** @var HttpRequest|null $request */
+                $request = (method_exists($component, 'getRequest') && $component->getRequest(
+                    ) instanceof HttpRequest) ? $component->getRequest() : null;
                 $builder = $instrumentation->tracer()
                     ->spanBuilder($component->getName())
                     ->setSpanKind(SpanKind::KIND_SERVER)
                     ->setAttribute(TraceAttributes::CODE_FUNCTION, $function)
                     ->setAttribute(TraceAttributes::CODE_NAMESPACE, $class)
                     ->setAttribute(TraceAttributes::CODE_FILEPATH, $filename)
-                    ->setAttribute(TraceAttributes::CODE_LINENO, $lineno)
-                ;
+                    ->setAttribute(TraceAttributes::CODE_LINENO, $lineno);
 
                 if (is_array($component->arResult) && count($component->arResult) > 0) {
                     $builder->setAttribute(self::RESULT, @json_encode($component->arResult));
@@ -61,8 +69,27 @@ class BitrixComponentInstrumentation
                         ->setAttribute(self::REQUEST_PAGE_DIR, $request->getRequestedPageDirectory())
                         ->setAttribute(self::REQUEST_QUERY, @json_encode($request->getQueryList()->toArray()))
                         ->setAttribute(self::REQUEST_COOKIES, @json_encode($request->getCookieList()->toArray()))
-                        ->startSpan()
-                    ;
+                        ->setAttribute(TraceAttributes::URL_FULL, $request->getDecodedUri())
+                        ->setAttribute(TraceAttributes::HTTP_URL, $request->getDecodedUri())
+                        ->setAttribute(TraceAttributes::HTTP_REQUEST_METHOD, $request->getRequestMethod())
+                        ->setAttribute(TraceAttributes::HTTP_METHOD, $request->getRequestMethod())
+                        ->setAttribute(TraceAttributes::HTTP_HOST, $request->getHttpHost())
+                        ->setAttribute(
+                            TraceAttributes::HTTP_REQUEST_BODY_SIZE,
+                            $request->getHeader('Content-Length')
+                        )->setAttribute(
+                            TraceAttributes::HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
+                            $request->getHeader('Content-Length')
+                        )
+                        ->setAttribute(TraceAttributes::USER_AGENT_ORIGINAL, $request->getUserAgent())
+                        ->setAttribute(TraceAttributes::HTTP_USER_AGENT, $request->getUserAgent())
+                        ->setAttribute(TraceAttributes::SERVER_ADDRESS, $request->getHttpHost())
+                        ->setAttribute(TraceAttributes::SERVER_PORT, $request->getServerPort())
+                        ->setAttribute(TraceAttributes::URL_SCHEME, $request->getServer()->getRequestScheme())
+                        ->setAttribute(TraceAttributes::HTTP_SCHEME, $request->getServer()->getRequestScheme())
+                        ->setAttribute(TraceAttributes::URL_PATH, $request->getRequestedPage())
+                        ->setAttribute(TraceAttributes::HTTP_TARGET, $request->getRequestUri())
+                        ->startSpan();
                 } else {
                     $span = $builder->startSpan();
                 }
@@ -82,8 +109,12 @@ class BitrixComponentInstrumentation
                 }
                 if ($response) {
                     $span->setAttribute(self::CODE_RESULT, @json_encode($response));
+                    $span->setAttribute(TraceAttributes::HTTP_RESPONSE_STATUS_CODE, ResponseProvider::provide($response));
+                    $span->setAttribute(TraceAttributes::HTTP_STATUS_CODE, ResponseProvider::provide($response));
                 }
                 $span->end();
+
+                return $response;
             }
         );
     }
