@@ -23,8 +23,9 @@ class BitrixComponentInstrumentation
     public const REQUEST_PAGE_DIR = self::NAME.'.request.directory';
     public const REQUEST_QUERY = self::NAME.'.request.query';
     public const REQUEST_COOKIES = self::NAME.'.request.cookies';
+    public const LEGACY_SUPPORT = 'OTEL_BITRIX_INSTRUMENTATION_LEGACY_SUPPORT';
 
-    public static function register(): void
+    public static function register(bool $legacySupport): void
     {
         $instrumentation = new CachedInstrumentation(
             'io.opentelemetry.contrib.php.'.self::NAME,
@@ -41,7 +42,7 @@ class BitrixComponentInstrumentation
                 string $function,
                 ?string $filename,
                 ?int $lineno
-            ) use ($instrumentation) {
+            ) use ($instrumentation, $legacySupport) {
                 /** @var HttpRequest|null $request */
                 $request = (method_exists($component, 'getRequest') && $component->getRequest(
                     ) instanceof HttpRequest) ? $component->getRequest() : null;
@@ -70,33 +71,39 @@ class BitrixComponentInstrumentation
                         ->setAttribute(self::REQUEST_QUERY, @json_encode($request->getQueryList()->toArray()))
                         ->setAttribute(self::REQUEST_COOKIES, @json_encode($request->getCookieList()->toArray()))
                         ->setAttribute(TraceAttributes::URL_FULL, $request->getDecodedUri())
-                        ->setAttribute(TraceAttributes::HTTP_URL, $request->getDecodedUri())
                         ->setAttribute(TraceAttributes::HTTP_REQUEST_METHOD, $request->getRequestMethod())
-                        ->setAttribute(TraceAttributes::HTTP_METHOD, $request->getRequestMethod())
-                        ->setAttribute(TraceAttributes::HTTP_HOST, $request->getHttpHost())
                         ->setAttribute(
                             TraceAttributes::HTTP_REQUEST_BODY_SIZE,
                             $request->getHeader('Content-Length')
-                        )->setAttribute(
-                            TraceAttributes::HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
-                            $request->getHeader('Content-Length')
                         )
                         ->setAttribute(TraceAttributes::USER_AGENT_ORIGINAL, $request->getUserAgent())
-                        ->setAttribute(TraceAttributes::HTTP_USER_AGENT, $request->getUserAgent())
                         ->setAttribute(TraceAttributes::SERVER_ADDRESS, $request->getHttpHost())
                         ->setAttribute(TraceAttributes::SERVER_PORT, $request->getServerPort())
                         ->setAttribute(TraceAttributes::URL_SCHEME, $request->getServer()->getRequestScheme())
-                        ->setAttribute(TraceAttributes::HTTP_SCHEME, $request->getServer()->getRequestScheme())
                         ->setAttribute(TraceAttributes::URL_PATH, $request->getRequestedPage())
-                        ->setAttribute(TraceAttributes::HTTP_TARGET, $request->getRequestUri())
                         ->startSpan();
+                    if ($legacySupport) {
+                        $span
+                            ->setAttribute(TraceAttributes::HTTP_URL, $request->getDecodedUri())
+                            ->setAttribute(TraceAttributes::HTTP_METHOD, $request->getRequestMethod())
+                            ->setAttribute(TraceAttributes::HTTP_HOST, $request->getHttpHost())
+                            ->setAttribute(
+                                TraceAttributes::HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
+                                $request->getHeader('Content-Length')
+                            )
+                            ->setAttribute(TraceAttributes::HTTP_USER_AGENT, $request->getUserAgent())
+                            ->setAttribute(TraceAttributes::HTTP_SCHEME, $request->getServer()->getRequestScheme())
+                            ->setAttribute(TraceAttributes::HTTP_TARGET, $request->getRequestUri());
+                    }
                 } else {
                     $span = $builder->startSpan();
                 }
 
                 Context::storage()->attach($span->storeInContext($parent));
             },
-            post: static function (\CBitrixComponent $component, array $params, $response, ?\Throwable $exception) {
+            post: static function (\CBitrixComponent $component, array $params, $response, ?\Throwable $exception) use (
+                $legacySupport
+            ) {
                 $scope = Context::storage()->scope();
                 if (!$scope) {
                     return $response;
@@ -106,11 +113,19 @@ class BitrixComponentInstrumentation
                 if ($exception) {
                     $span->recordException($exception, [TraceAttributes::EXCEPTION_ESCAPED => true]);
                     $span->setStatus(StatusCode::STATUS_ERROR, $exception->getMessage());
+                    if ($response !== null) {
+                        $response = 0;
+                    }
                 }
-                if ($response) {
+                if ($response !== null) {
                     $span->setAttribute(self::CODE_RESULT, @json_encode($response));
-                    $span->setAttribute(TraceAttributes::HTTP_RESPONSE_STATUS_CODE, ResponseProvider::provide($response));
-                    $span->setAttribute(TraceAttributes::HTTP_STATUS_CODE, ResponseProvider::provide($response));
+                    $span->setAttribute(
+                        TraceAttributes::HTTP_RESPONSE_STATUS_CODE,
+                        ResponseProvider::provide($response)
+                    );
+                    if ($legacySupport) {
+                        $span->setAttribute(TraceAttributes::HTTP_STATUS_CODE, ResponseProvider::provide($response));
+                    }
                 }
                 $span->end();
 

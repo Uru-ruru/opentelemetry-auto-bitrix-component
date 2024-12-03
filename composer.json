@@ -1,7 +1,14 @@
 {
   "name": "uru/opentelemetry-auto-bitrix-component",
   "description": "OpenTelemetry auto-instrumentation for Bitrix Framework.",
-  "keywords": ["opentelemetry", "otel", "open-telemetry", "tracing", "bitrix", "instrumentation"],
+  "keywords": [
+    "opentelemetry",
+    "otel",
+    "open-telemetry",
+    "tracing",
+    "bitrix",
+    "instrumentation"
+  ],
   "type": "library",
   "homepage": "https://opentelemetry.io/docs/languages/php/",
   "readme": "./README.md",
@@ -28,8 +35,8 @@
       "_register.php"
     ]
   },
-  "scripts" : {
-    "php-cs-fixer" : "vendor/bin/php-cs-fixer fix --verbose --allow-risky=yes --using-cache=no --config .php-cs-fixer.php",
-    "php-stan" : "vendor/bin/phpstan analyse --memory-limit 1G"
+  "scripts": {
+    "php-cs-fixer": "vendor/bin/php-cs-fixer fix --verbose --allow-risky=yes --using-cache=no --config .php-cs-fixer.php",
+    "php-stan": "vendor/bin/phpstan analyse --memory-limit 1G"
   }
 }

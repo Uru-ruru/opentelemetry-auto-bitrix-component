@@ -11,7 +11,11 @@ Auto-instrumentation hooks are registered via composer, and spans will automatic
 
 ## Install
 
-`composer require uru/opentelemetry-auto-bitrix-component`
+install via composer
+
+```shell
+composer require uru/opentelemetry-auto-bitrix-component
+```
 
 ## Extend
 
@@ -34,4 +38,10 @@ The extension can be disabled via [runtime configuration](https://opentelemetry.
 
 ```shell
 OTEL_PHP_DISABLED_INSTRUMENTATIONS=bitrix.component
+```
+
+For enabling support legacy attributes for exporters such Azure Monitor
+
+```shell
+OTEL_BITRIX_INSTRUMENTATION_LEGACY_SUPPORT=true
 ```
